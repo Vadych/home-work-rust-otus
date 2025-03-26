@@ -1,20 +1,41 @@
-use smart_home::{Home, Room, SmartDevice, SmartSocket, SmartThermometer};
+use smart_home::{room, Home, Report, Room, SmartDevice, SmartSocket, SmartThermometer};
 fn main() {
-    let socket1 = SmartDevice::Socket(SmartSocket::new("Socket1".to_string()));
-    let term1 = SmartDevice::Thermometer(SmartThermometer::new("Therm1".to_string()));
-    let socket2 = SmartDevice::Socket(SmartSocket::new("Socket2".to_string()));
-    let term2 = SmartDevice::Thermometer(SmartThermometer::new("Therm2".to_string()));
+    let room1 = room! {
+        ("Socket1", SmartSocket),
+        ("Thermometer1", SmartThermometer)
+    };
 
-    let room1 = Room::new("Room1".to_string(), vec![socket1, term1]);
-    let room2 = Room::new("Room2".to_string(), vec![socket2, term2]);
+    let room2 = room! {
+        ("Socket2", SmartSocket),
+        ("Thermometer2", SmartThermometer)
+    };
 
-    let mut home = Home::new("Home".to_string(), vec![room1, room2]);
-    home.print_report();
+    let mut home = Home::new("Home".to_string());
+    home.add_room("Room1".to_string(), room1);
+    home.add_room("Room2".to_string(), room2);
 
-    if let SmartDevice::Socket(socket) = home.get_room_mut(1).get_device_mut(0) {
-        socket.switch();
-        println!("***\nSwitching socket {}\n***", socket.name);
+    report(home.get_room("Room1").unwrap());
+    report(&home);
+    println!("Switch Socket1 in Room1");
+    if let SmartDevice::SmartSocket(device) = home.get_device("Room1", "Socket1").unwrap() {
+        device.switch()
     }
+    report(home.get_device("Room1", "Socket1").unwrap());
+    report(&home);
+    match home.get_device("Room3", "Socket1") {
+        Ok(device) => {
+            report(device);
+        }
+        Err(err) => println!("{}", err),
+    }
+    match home.get_device("Room1", "Socket2") {
+        Ok(device) => {
+            report(device);
+        }
+        Err(err) => println!("{}", err),
+    }
+}
 
-    home.print_report();
+fn report<T: Report>(obj: &T) {
+    println!("{}", obj.report())
 }
