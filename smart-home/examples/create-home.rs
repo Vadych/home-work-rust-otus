@@ -11,8 +11,8 @@ fn main() {
     };
 
     let mut home = Home::new("Home".to_string());
-    home.add_room("Room1".to_string(), room1);
-    home.add_room("Room2".to_string(), room2);
+    home.add_room("Room1", room1);
+    home.add_room("Room2", room2);
 
     report(home.get_room("Room1").unwrap());
     report(&home);

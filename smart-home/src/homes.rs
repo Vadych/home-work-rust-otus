@@ -8,14 +8,23 @@ pub struct Home {
     rooms: HashMap<String, Room>,
 }
 impl Home {
-    pub fn new(name: String) -> Home {
+    pub fn new<T>(name: T) -> Home
+    where
+        T: Into<String>,
+    {
         Home {
-            name,
+            name: name.into(),
             rooms: HashMap::new(),
         }
     }
-    pub fn new_with_rooms(name: String, rooms: HashMap<String, Room>) -> Home {
-        Home { name, rooms }
+    pub fn new_with_rooms<T>(name: T, rooms: HashMap<String, Room>) -> Home
+    where
+        T: Into<String>,
+    {
+        Home {
+            name: name.into(),
+            rooms,
+        }
     }
     pub fn get_room(&self, name: &str) -> Option<&Room> {
         self.rooms.get(name)
@@ -23,8 +32,11 @@ impl Home {
     pub fn get_room_mut(&mut self, name: &str) -> Option<&mut Room> {
         self.rooms.get_mut(name)
     }
-    pub fn add_room(&mut self, name: String, room: Room) {
-        self.rooms.insert(name, room);
+    pub fn add_room<T>(&mut self, name: T, room: Room)
+    where
+        T: Into<String>,
+    {
+        self.rooms.insert(name.into(), room);
     }
     pub fn remove_room(&mut self, name: &str) {
         self.rooms.remove(name);
@@ -60,20 +72,20 @@ mod tests {
 
     #[test]
     fn test_new_home() {
-        let name = "My Home".to_string();
-        let home = Home::new(name.clone());
+        let name = "My Home";
+        let home = Home::new(name);
         assert_eq!(home.name, name);
         assert!(home.rooms.is_empty());
     }
 
     #[test]
     fn test_new_home_with_rooms() {
-        let name = "Test Home".to_string();
+        let name = "Test Home";
         let mut rooms = HashMap::new();
         rooms.insert("Room 1".to_string(), Room::default());
         rooms.insert("Room 2".to_string(), Room::default());
 
-        let home = Home::new_with_rooms(name.clone(), rooms);
+        let home = Home::new_with_rooms(name, rooms);
 
         assert_eq!(home.name, name);
         assert_eq!(home.rooms.len(), 2);
@@ -82,7 +94,7 @@ mod tests {
     }
     #[test]
     fn test_get_room() {
-        let mut home = Home::new("Test Home".to_string());
+        let mut home = Home::new("Test Home");
 
         let result = home.get_room("Room 1");
         assert!(result.is_none());
@@ -96,7 +108,7 @@ mod tests {
     }
     #[test]
     fn test_get_room_mut() {
-        let mut home = Home::new("Test Home".to_string());
+        let mut home = Home::new("Test Home");
 
         let result = home.get_room_mut("Room 1");
         assert!(result.is_none());
@@ -110,7 +122,7 @@ mod tests {
     }
     #[test]
     fn test_add_room() {
-        let mut home = Home::new("Test Home".to_string());
+        let mut home = Home::new("Test Home");
         home.add_room("Room 1".to_string(), Room::default());
         assert!(home.rooms.contains_key("Room 1"));
 
@@ -122,7 +134,7 @@ mod tests {
     }
     #[test]
     fn test_remove_room() {
-        let mut home = Home::new("Test Home".to_string());
+        let mut home = Home::new("Test Home");
         home.add_room("Room 1".to_string(), Room::default());
         home.add_room("Room 2".to_string(), Room::default());
 
@@ -133,7 +145,7 @@ mod tests {
     }
     #[test]
     fn test_get_device() {
-        let mut home = Home::new("Test Home".to_string());
+        let mut home = Home::new("Test Home");
         let mut room = Room::default();
         room.add_device(
             "Device 1".to_string(),

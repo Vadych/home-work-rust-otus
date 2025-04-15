@@ -17,8 +17,11 @@ impl Room {
     pub fn get_device_mut(&mut self, name: &str) -> Option<&mut SmartDevice> {
         self.devices.get_mut(name)
     }
-    pub fn add_device(&mut self, name: String, device: SmartDevice) {
-        self.devices.insert(name, device);
+    pub fn add_device<T>(&mut self, name: T, device: SmartDevice)
+    where
+        T: Into<String>,
+    {
+        self.devices.insert(name.into(), device);
     }
     pub fn remove_device(&mut self, name: &str) {
         self.devices.remove(name);
@@ -81,7 +84,7 @@ mod tests {
     fn test_get_device() {
         let mut room = Room::default();
         let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer".to_string(), device);
+        room.add_device("Termometer", device);
         let device = room.get_device("Termometer");
         assert!(device.is_some());
         let device = room.get_device("Socket");
@@ -91,7 +94,7 @@ mod tests {
     fn test_get_device_mut() {
         let mut room = Room::default();
         let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer".to_string(), device);
+        room.add_device("Termometer", device);
         let device = room.get_device_mut("Termometer");
         assert!(device.is_some());
         let device = room.get_device_mut("Socket");
@@ -102,7 +105,7 @@ mod tests {
     fn test_add_device() {
         let mut room = Room::default();
         let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer".to_string(), device);
+        room.add_device("Termometer", device);
         assert!(room.devices.contains_key("Termometer"));
     }
 
@@ -110,7 +113,7 @@ mod tests {
     fn test_remove_device() {
         let mut room = Room::default();
         let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer".to_string(), device);
+        room.add_device("Termometer", device);
         assert!(room.devices.contains_key("Termometer"));
         room.remove_device("Termometer");
         assert!(!room.devices.contains_key("Termometer"));
