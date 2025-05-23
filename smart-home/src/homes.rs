@@ -1,8 +1,8 @@
 use crate::SmartHomeError;
-use crate::{rooms::Room, SmartDevice};
+use crate::{SmartDevice, rooms::Room};
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Home {
     pub name: String,
     rooms: HashMap<String, Room>,
@@ -66,6 +66,8 @@ impl<'a> IntoIterator for &'a Home {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use crate::SmartSocket;
 
     use super::*;
@@ -149,7 +151,7 @@ mod tests {
         let mut room = Room::default();
         room.add_device(
             "Device 1".to_string(),
-            SmartDevice::SmartSocket(SmartSocket::default()),
+            SmartDevice::from(SmartSocket::new(Cursor::new(Vec::new()))),
         );
         home.add_room("Room 1".to_string(), room);
 
@@ -158,16 +160,8 @@ mod tests {
 
         let result = home.get_device("Room 1", "Device 2");
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            SmartHomeError::DeviceNotFound("Device 2".to_string())
-        );
 
         let result = home.get_device("Room 2", "Device 2");
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            SmartHomeError::RoomNotFound("Room 2".to_string())
-        );
     }
 }

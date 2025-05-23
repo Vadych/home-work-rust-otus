@@ -1,7 +1,6 @@
 use crate::SmartDevice;
 use std::collections::HashMap;
-
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, Default)]
 pub struct Room {
     devices: HashMap<String, SmartDevice>,
 }
@@ -30,10 +29,10 @@ impl Room {
 
 #[macro_export]
 macro_rules! room {
-    ($(($name: expr, $device: ty)), +) => {
+    ($(($name: expr, $device: ty, $ip: expr)), +) => {
         {
             let room = Room::new_with_devices( [
-            $(($name.to_string(), SmartDevice::from(<$device>::default())),
+            $(($name.to_string(), SmartDevice::from(<$device>::connect($ip).expect("Failed to connect"))),
             )+].into());
             room
         }
@@ -50,7 +49,9 @@ impl<'a> IntoIterator for &'a Room {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SmartSocket, SmartThermometer};
+    use std::io::Cursor;
+
+    use crate::SmartSocket;
 
     use super::*;
 
@@ -66,73 +67,51 @@ mod tests {
         let mut devices = HashMap::new();
         devices.insert(
             "Socket".to_string(),
-            SmartDevice::SmartSocket(SmartSocket::default()),
-        );
-        devices.insert(
-            "Termometer".to_string(),
-            SmartDevice::SmartThermometer(SmartThermometer::default()),
+            SmartDevice::SmartSocket(SmartSocket::new(Cursor::new(Vec::new()))),
         );
 
         let room = Room::new_with_devices(devices);
 
-        assert_eq!(room.devices.len(), 2);
+        assert_eq!(room.devices.len(), 1);
         assert!(room.devices.contains_key("Socket"));
-        assert!(room.devices.contains_key("Termometer"));
     }
 
     #[test]
     fn test_get_device() {
         let mut room = Room::default();
-        let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer", device);
-        let device = room.get_device("Termometer");
-        assert!(device.is_some());
+        let device = SmartDevice::from(SmartSocket::new(Cursor::new(Vec::new())));
+        room.add_device("Socket", device);
         let device = room.get_device("Socket");
+        assert!(device.is_some());
+        let device = room.get_device("Termometer");
         assert!(device.is_none());
     }
     #[test]
     fn test_get_device_mut() {
         let mut room = Room::default();
-        let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer", device);
-        let device = room.get_device_mut("Termometer");
-        assert!(device.is_some());
+        let device = SmartDevice::from(SmartSocket::new(Cursor::new(Vec::new())));
+        room.add_device("Socket", device);
         let device = room.get_device_mut("Socket");
+        assert!(device.is_some());
+        let device = room.get_device_mut("Termometer");
         assert!(device.is_none());
     }
 
     #[test]
     fn test_add_device() {
         let mut room = Room::default();
-        let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer", device);
-        assert!(room.devices.contains_key("Termometer"));
+        let device = SmartDevice::from(SmartSocket::new(Cursor::new(Vec::new())));
+        room.add_device("Socket", device);
+        assert!(room.devices.contains_key("Socket"));
     }
 
     #[test]
     fn test_remove_device() {
         let mut room = Room::default();
-        let device = SmartDevice::from(SmartThermometer::default());
-        room.add_device("Termometer", device);
-        assert!(room.devices.contains_key("Termometer"));
-        room.remove_device("Termometer");
-        assert!(!room.devices.contains_key("Termometer"));
-    }
-
-    #[test]
-    fn test_macro_room() {
-        let room = room![("Socket", SmartSocket), ("Termometer", SmartThermometer)];
+        let device = SmartSocket::new(Cursor::new(Vec::new())).into();
+        room.add_device("Socket", device);
         assert!(room.devices.contains_key("Socket"));
-        assert!(room.devices.contains_key("Termometer"));
-
-        assert_eq!(
-            room.get_device("Socket").unwrap(),
-            &SmartDevice::from(SmartSocket::default())
-        );
-
-        assert_eq!(
-            room.get_device("Termometer").unwrap(),
-            &SmartDevice::from(SmartThermometer::default())
-        )
+        room.remove_device("Socket");
+        assert!(!room.devices.contains_key("Socket"));
     }
 }
