@@ -1,13 +1,17 @@
-use crate::SmartDevice;
+use crate::{SmartDevice, subscrib::Subscriber};
 use std::collections::HashMap;
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Room {
     devices: HashMap<String, SmartDevice>,
+    subscribers: Vec<Box<dyn Subscriber>>,
 }
 
 impl Room {
     pub fn new_with_devices(devices: HashMap<String, SmartDevice>) -> Room {
-        Room { devices }
+        Room {
+            devices,
+            ..Default::default()
+        }
     }
     pub fn get_device(&self, name: &str) -> Option<&SmartDevice> {
         self.devices.get(name)
@@ -20,10 +24,17 @@ impl Room {
     where
         T: Into<String>,
     {
-        self.devices.insert(name.into(), device);
+        let name = name.into();
+        for subscriber in self.subscribers.iter_mut() {
+            subscriber.on_add(&name);
+        }
+        self.devices.insert(name.to_owned(), device);
     }
     pub fn remove_device(&mut self, name: &str) {
         self.devices.remove(name);
+    }
+    pub fn subscribe<S: Subscriber + 'static>(&mut self, observer: S) {
+        self.subscribers.push(Box::new(observer));
     }
 }
 
@@ -113,5 +124,21 @@ mod tests {
         assert!(room.devices.contains_key("Socket"));
         room.remove_device("Socket");
         assert!(!room.devices.contains_key("Socket"));
+    }
+
+    struct TestSubscriber;
+
+    impl Subscriber for TestSubscriber {
+        fn on_add(&mut self, _name: &str) {}
+    }
+
+    #[test]
+    fn test_subscribe_multiple_subscribers() {
+        let mut room = Room::default();
+        let subscriber1 = TestSubscriber;
+        let subscriber2 = TestSubscriber;
+        room.subscribe(subscriber1);
+        room.subscribe(subscriber2);
+        assert_eq!(room.subscribers.len(), 2);
     }
 }

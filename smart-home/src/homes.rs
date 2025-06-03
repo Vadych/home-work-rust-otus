@@ -2,7 +2,6 @@ use crate::SmartHomeError;
 use crate::{SmartDevice, rooms::Room};
 use std::collections::HashMap;
 
-#[derive(Debug)]
 pub struct Home {
     pub name: String,
     rooms: HashMap<String, Room>,

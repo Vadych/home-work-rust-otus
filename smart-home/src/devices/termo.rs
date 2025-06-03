@@ -47,7 +47,6 @@ impl SmartThermometer {
         let temperature_clone = temperature.clone();
 
         thread::spawn(move || {
-            println!("Thread started");
             loop {
                 if finished_clone.load(Ordering::SeqCst) {
                     return;
